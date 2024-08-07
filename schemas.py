@@ -1,5 +1,5 @@
 from app import ma
-from models import User, Profile, Category, Content, Comment, Like, Subscription, Wishlist
+from models import User, Profile, Category, Content, Comment, Wishlist
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -20,14 +20,6 @@ class ContentSchema(ma.SQLAlchemyAutoSchema):
 class CommentSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Comment
-
-class LikeSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Like
-
-class SubscriptionSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Subscription
 
 class WishlistSchema(ma.SQLAlchemyAutoSchema):
     class Meta:

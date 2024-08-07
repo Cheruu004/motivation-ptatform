@@ -1,10 +1,35 @@
 from datetime import datetime
-from flask import Blueprint, request, jsonify, url_for
-from models import Content, Comment, Subscription, Wishlist, Like
+from flask import Blueprint, request, jsonify # type: ignore
+from models import User, Profile, Content, Comment, Wishlist
 from app import db
-from schemas import ContentSchema, CommentSchema, SubscriptionSchema, WishlistSchema, LikeSchema
+from schemas import ProfileSchema, ContentSchema, CommentSchema, WishlistSchema
 
 bp = Blueprint('student', __name__, url_prefix='/students')
+
+@bp.route('/profile', methods=['POST'])
+def create_profile():
+    data = request.get_json()
+    new_user = User(
+        username=data['username'],
+        email=data['email'],
+        password_hash=data['password_hash'],
+        role='student',
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    new_profile = Profile(
+        user_id=new_user.id,
+        bio=data.get('bio', ''),
+        profile_picture_url=data.get('profile_picture_url', ''),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.session.add(new_profile)
+    db.session.commit()
+    return ProfileSchema().jsonify(new_profile)
 
 @bp.route('/content', methods=['GET'])
 def list_all_content():
@@ -15,6 +40,23 @@ def list_all_content():
 def view_specific_content(content_id):
     content = Content.query.get_or_404(content_id)
     return ContentSchema().jsonify(content)
+
+@bp.route('/content', methods=['POST'])
+def post_content():
+    data = request.get_json()
+    new_content = Content(
+        title=data['title'],
+        description=data.get('description', ''),
+        content_type=data['content_type'],
+        content_url=data['content_url'],
+        category_id=data['category_id'],
+        created_by=data['user_id'],
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.session.add(new_content)
+    db.session.commit()
+    return ContentSchema().jsonify(new_content)
 
 @bp.route('/comments', methods=['POST'])
 def post_comment():
@@ -45,42 +87,6 @@ def reply_to_comment(comment_id):
     db.session.commit()
     return CommentSchema().jsonify(new_comment)
 
-@bp.route('/comments/<int:comment_id>', methods=['PATCH'])
-def edit_own_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    data = request.get_json()
-    if 'text' in data:
-        comment.text = data['text']
-    db.session.commit()
-    return CommentSchema().jsonify(comment)
-
-@bp.route('/comments/<int:comment_id>', methods=['DELETE'])
-def remove_own_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    db.session.delete(comment)
-    db.session.commit()
-    return '', 204
-
-@bp.route('/subscriptions', methods=['POST'])
-def subscribe_to_category():
-    data = request.get_json()
-    new_subscription = Subscription(
-        user_id=data['user_id'],
-        category_id=data['category_id'],
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    db.session.add(new_subscription)
-    db.session.commit()
-    return SubscriptionSchema().jsonify(new_subscription)
-
-@bp.route('/subscriptions/<int:subscription_id>', methods=['DELETE'])
-def unsubscribe_from_category(subscription_id):
-    subscription = Subscription.query.get_or_404(subscription_id)
-    db.session.delete(subscription)
-    db.session.commit()
-    return '', 204
-
 @bp.route('/wishlist', methods=['POST'])
 def add_to_wishlist():
     data = request.get_json()
@@ -101,41 +107,12 @@ def remove_from_wishlist(wishlist_id):
     db.session.commit()
     return '', 204
 
-@bp.route('/likes', methods=['POST'])
-def like_or_dislike():
-    data = request.get_json()
-    new_like = Like(
-        user_id=data['user_id'],
-        content_id=data.get('content_id'),
-        comment_id=data.get('comment_id'),
-        type=data['type'],
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    db.session.add(new_like)
-    db.session.commit()
-    return LikeSchema().jsonify(new_like)
+@bp.route('/comments/<int:content_id>', methods=['GET'])
+def list_comments(content_id):
+    comments = Comment.query.filter_by(content_id=content_id).all()
+    return CommentSchema(many=True).jsonify(comments)
 
-
-@bp.route('/share', methods=['POST'])
-def share_content():
-    try:
-        # Extract data from the request
-        data = request.json
-        platform = data.get('platform')  # This might be used for further logic if needed
-        content_id = data.get('content_id')
-
-        # Check if content_id is provided
-        if not content_id:
-            return jsonify({"error": "content_id is required"}), 400
-
-        # Generate a URL for sharing
-        # Here, we are assuming you have an endpoint that displays content details
-        shareable_url = url_for('content_details', content_id=content_id, _external=True)
-
-        # Return the shareable URL
-        return jsonify({"message": "Content shareable URL generated successfully", "url": shareable_url}), 200
-
-    except Exception as e:
-        # Handle exceptions
-        return jsonify({"error": str(e)}), 500
+@bp.route('/comments/replies/<int:comment_id>', methods=['GET'])
+def list_replies(comment_id):
+    replies = Comment.query.filter_by(parent_comment_id=comment_id).all()
+    return CommentSchema(many=True).jsonify(replies)

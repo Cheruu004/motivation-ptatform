@@ -128,7 +128,7 @@ paths:
               description:
                 type: "string"
               created_by:
-                type: "string"
+                type: "integer"
       responses:
         201:
           description: "Category created successfully"
@@ -228,7 +228,7 @@ paths:
               category_id:
                 type: "integer"
               created_by:
-                type: "string"
+                type: "integer"
       responses:
         201:
           description: "Content posted successfully"
@@ -423,67 +423,35 @@ paths:
         404:
           description: "Comment not found"
 
-  /students/notifications:
-    get:
+  /students/profile:
+    post:
       tags:
         - "student"
-      summary: "List all notifications for a student"
+      summary: "Create a new student profile"
       parameters:
-        - name: "user_id"
-          in: "query"
+        - in: "body"
+          name: "body"
           required: true
-          type: "integer"
-      responses:
-        200:
-          description: "List of notifications"
           schema:
-            type: "array"
-            items:
-              type: "object"
-              properties:
-                id:
-                  type: "integer"
-                message:
-                  type: "string"
-                date:
-                  type: "string"
-                  format: "date-time"
-        400:
-          description: "Invalid user ID"
-        500:
-          description: "Internal server error"
-
-  /students/notifications/{notification_id}:
-    delete:
-      tags:
-        - "student"
-      summary: "Delete a specific notification"
-      parameters:
-        - name: "notification_id"
-          in: "path"
-          required: true
-          type: "integer"
+            type: "object"
+            required:
+              - "username"
+              - "email"
+              - "password_hash"
+            properties:
+              username:
+                type: "string"
+              email:
+                type: "string"
+              password_hash:
+                type: "string"
+              bio:
+                type: "string"
+              profile_picture_url:
+                type: "string"
       responses:
-        204:
-          description: "Notification deleted successfully"
-        404:
-          description: "Notification not found"
-        500:
-          description: "Internal server error"
-
-  /students/profiles/{user_id}:
-    get:
-      tags:
-        - "student"
-      summary: "Retrieve student profile"
-      parameters:
-        - name: "user_id"
-          in: "path"
-          required: true
-          type: "integer"
-      responses:
-        200:
-          description: "Student profile details"
+        201:
+          description: "Profile created successfully"
           schema:
             type: "object"
             properties:
@@ -495,130 +463,363 @@ paths:
                 type: "string"
               bio:
                 type: "string"
-              profile_picture:
+              profile_picture_url:
                 type: "string"
-        404:
-          description: "Student not found"
-        500:
-          description: "Internal server error"
-
-  /students/profiles/{user_id}/update:
-    patch:
-      tags:
-        - "student"
-      summary: "Update student profile"
-      parameters:
-        - name: "user_id"
-          in: "path"
-          required: true
-          type: "integer"
-        - in: "body"
-          name: "body"
-          required: true
-          schema:
-            type: "object"
-            properties:
-              username:
-                type: "string"
-              email:
-                type: "string"
-              bio:
-                type: "string"
-              profile_picture:
-                type: "string"
-      responses:
-        200:
-          description: "Profile updated successfully"
         400:
           description: "Invalid request payload"
-        404:
-          description: "Student not found"
         500:
           description: "Internal server error"
 
-  /students/password/reset:
-    post:
-      tags:
-        - "student"
-      summary: "Request a password reset"
-      parameters:
-        - in: "body"
-          name: "body"
-          required: true
-          schema:
-            type: "object"
-            required:
-              - "email"
-            properties:
-              email:
-                type: "string"
-      responses:
-        200:
-          description: "Password reset request initiated"
-        400:
-          description: "Invalid email address"
-        500:
-          description: "Internal server error"
-
-  /students/password/reset/{token}:
-    post:
-      tags:
-        - "student"
-      summary: "Reset password using token"
-      parameters:
-        - name: "token"
-          in: "path"
-          required: true
-          type: "string"
-        - in: "body"
-          name: "body"
-          required: true
-          schema:
-            type: "object"
-            required:
-              - "new_password"
-            properties:
-              new_password:
-                type: "string"
-      responses:
-        200:
-          description: "Password reset successfully"
-        400:
-          description: "Invalid token or password"
-        404:
-          description: "Token not found"
-        500:
-          description: "Internal server error"
-
-  /students/reports:
+  /students/content:
     get:
       tags:
         - "student"
-      summary: "Generate a report of student activities"
-      parameters:
-        - name: "user_id"
-          in: "query"
-          required: true
-          type: "integer"
-        - name: "start_date"
-          in: "query"
-          required: false
-          type: "string"
-          format: "date"
-        - name: "end_date"
-          in: "query"
-          required: false
-          type: "string"
-          format: "date"
+      summary: "List all content"
       responses:
         200:
-          description: "Report generated successfully"
+          description: "List of content"
+          schema:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id:
+                  type: "integer"
+                title:
+                  type: "string"
+                description:
+                  type: "string"
+                content_type:
+                  type: "string"
+                content_url:
+                  type: "string"
+                category_id:
+                  type: "integer"
+                created_by:
+                  type: "integer"
+                created_at:
+                  type: "string"
+                  format: "date-time"
+                updated_at:
+                  type: "string"
+                  format: "date-time"
+        500:
+          description: "Internal server error"
+
+  /students/content/{content_id}:
+    get:
+      tags:
+        - "student"
+      summary: "View specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Content details"
           schema:
             type: "object"
             properties:
-              report_url:
+              id:
+                type: "integer"
+              title:
                 type: "string"
-        400:
-          description: "Invalid query parameters"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              created_by:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        404:
+          description: "Content not found"
         500:
           description: "Internal server error"
+
+  /students/content:
+    post:
+      tags:
+        - "student"
+      summary: "Post new content"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "title"
+              - "content_type"
+              - "content_url"
+              - "category_id"
+              - "user_id"
+            properties:
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+      responses:
+        201:
+          description: "Content posted successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              created_by:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/comments:
+    post:
+      tags:
+        - "student"
+      summary: "Post a new comment"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "content_id"
+              - "user_id"
+              - "text"
+            properties:
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+      responses:
+        201:
+          description: "Comment posted successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/comments/{comment_id}/reply:
+    post:
+      tags:
+        - "student"
+      summary: "Reply to a comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "content_id"
+              - "user_id"
+              - "text"
+            properties:
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+      responses:
+        201:
+          description: "Reply posted successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+              parent_comment_id:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        404:
+          description: "Comment not found"
+        500:
+          description: "Internal server error"
+
+  /students/wishlist:
+    post:
+      tags:
+        - "student"
+      summary: "Add content to wishlist"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "user_id"
+              - "content_id"
+            properties:
+              user_id:
+                type: "integer"
+              content_id:
+                type: "integer"
+      responses:
+        201:
+          description: "Content added to wishlist successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              content_id:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/wishlist/{wishlist_id}:
+    delete:
+      tags:
+        - "student"
+      summary: "Remove content from wishlist"
+      parameters:
+        - name: "wishlist_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        204:
+          description: "Content removed from wishlist successfully"
+        404:
+          description: "Wishlist item not found"
+        500:
+          description: "Internal server error"
+
+  /students/comments/{content_id}:
+    get:
+      tags:
+        - "student"
+      summary: "List comments for specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "List of comments for the content"
+          schema:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id:
+                  type: "integer"
+                content_id:
+                  type: "integer"
+                user_id:
+                  type: "integer"
+                text:
+                  type: "string"
+                created_at:
+                  type: "string"
+                  format: "date-time"
+                updated_at:
+                  type: "string"
+                  format: "date-time"
+        404:
+          description: "Content not found"
+        500:
+          description: "Internal server error"
+
+  /students/comments/replies/{comment_id}:
+    get:
+      tags:
+        - "student"
+      summary: "List replies to a specific comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "List of replies to the comment"
+          schema:
+            type: "array"
+            items:

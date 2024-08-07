@@ -1,12 +1,12 @@
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
-from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager
-from flasgger import Swagger
+from flask import Flask # type: ignore
+from flask_sqlalchemy import SQLAlchemy # type: ignore
+from flask_marshmallow import Marshmallow # type: ignore
+from flask_bcrypt import Bcrypt # type: ignore
+from flask_jwt_extended import JWTManager # type: ignore
+from flasgger import Swagger # type: ignore
 from config import Config
-from flask_cors import CORS
+from flask_cors import CORS # type: ignore
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -38,7 +38,7 @@ def create_app():
     app.register_blueprint(student.bp, url_prefix='/students')
 
     # Import models here to ensure they are registered with SQLAlchemy
-    from models import User, Profile, Category, Content, Comment, Like, Subscription, Wishlist
+    from models import User, Profile, Category, Content, Comment, Wishlist
 
     # Create database tables
     with app.app_context():
