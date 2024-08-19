@@ -1,1 +1,1 @@
-gunicorn app:motivation-ptatform
+gunicorn motivation-ptatform:app
