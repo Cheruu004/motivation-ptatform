@@ -49,6 +49,8 @@ paths:
         400:
           description: "Missing required fields"
 
+    
+
   /admin/users/{user_id}/deactivate:
     patch:
       tags:
@@ -422,6 +424,42 @@ paths:
           description: "Comment deleted successfully"
         404:
           description: "Comment not found"
+
+  /staff/content:
+    get:
+      tags:
+        - "staff"
+      summary: "Retrieve all content for staff"
+      responses:
+        200:
+          description: "A list of content items for staff"
+          schema:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id:
+                  type: "integer"
+                title:
+                  type: "string"
+                description:
+                  type: "string"
+                content_type:
+                  type: "string"
+                content_url:
+                  type: "string"
+                category_id:
+                  type: "integer"
+                created_by:
+                  type: "integer"
+                created_at:
+                  type: "string"
+                  format: "date-time"
+                updated_at:
+                  type: "string"
+                  format: "date-time"
+        500:
+          description: "Internal server error"
 
   /students/profile:
     post:

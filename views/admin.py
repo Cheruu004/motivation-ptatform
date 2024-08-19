@@ -3,8 +3,14 @@ from flask import Blueprint, request, jsonify # type: ignore
 from models import User, Content, Category
 from app import db
 from schemas import UserSchema, ContentSchema, CategorySchema
+from flask_cors import CORS
+from flask import Flask, jsonify
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
+app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app)
 
 @bp.route('/users', methods=['POST'])
 def add_user():
@@ -49,17 +55,47 @@ def remove_flagged_content(content_id):
     db.session.delete(content)
     db.session.commit()
     return '', 204
-
 @bp.route('/categories', methods=['POST'])
 def create_category():
     data = request.get_json()
+    
+    if not data or 'created_by' not in data:
+        return jsonify({"error": "'created_by' field is required"}), 400
+    
     new_category = Category(
-        name=data['name'],
-        description=data['description'],
+        name=data.get('name', ''),
+        description=data.get('description', ''),
         created_by=data['created_by'],
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )
+    
     db.session.add(new_category)
     db.session.commit()
+    
     return CategorySchema().jsonify(new_category)
+
+
+@bp.route('/users', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    return UserSchema(many=True).jsonify(users)
+
+@bp.route('/content', methods=['GET'])
+def get_content():
+    content = Content.query.all()
+    return ContentSchema(many=True).jsonify(content)
+
+@bp.route('/analytics', methods=['GET'])
+def get_analytics():
+    total_users = User.query.count()
+    total_staff = User.query.filter_by(role='staff').count()
+    total_students = User.query.filter_by(role='student').count()
+    total_content = Content.query.count()
+    
+    return jsonify({
+        "totalUsers": total_users,
+        "totalStaff": total_staff,
+        "totalStudents": total_students,
+        "totalContent": total_content
+    })
