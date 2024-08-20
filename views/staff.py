@@ -25,6 +25,7 @@ def post_content():
     db.session.commit()
     return ContentSchema().jsonify(new_content)
 
+
 @bp.route('/content/<int:content_id>', methods=['PATCH'])
 def edit_content(content_id):
     content = Content.query.get_or_404(content_id)
