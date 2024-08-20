@@ -196,7 +196,6 @@ def list_categories():
     categories = Category.query.all()
     return CategorySchema(many=True).jsonify(categories)
 
-# Subscribe to a category
 @bp.route('/categories/subscribe', methods=['POST'])
 def subscribe_to_category():
     data = request.get_json()
@@ -206,16 +205,18 @@ def subscribe_to_category():
     if not user_id or not category_id:
         return jsonify({"error": "User ID and Category ID are required"}), 400
 
-    # Ensure the user is not already subscribed
-    category = Category.query.get_or_404(category_id)
-    if category_id in [cat.id for cat in User.query.get(user_id).categories]:  # Checking for subscription
+    user = User.query.get(user_id)
+    category = Category.query.get(category_id)
+
+    if not user or not category:
+        return jsonify({"error": "User or Category not found"}), 404
+
+    if category in user.subscribed_categories:
         return jsonify({"error": "Already subscribed to this category"}), 400
 
-    category.subscribers.append(User.query.get(user_id))
-    db.session.commit()
+    user.subscribe_to_category(category)
     return jsonify({"message": "Successfully subscribed to category"}), 200
 
-# Unsubscribe from a category
 @bp.route('/categories/unsubscribe', methods=['POST'])
 def unsubscribe_from_category():
     data = request.get_json()
@@ -225,13 +226,16 @@ def unsubscribe_from_category():
     if not user_id or not category_id:
         return jsonify({"error": "User ID and Category ID are required"}), 400
 
-    category = Category.query.get_or_404(category_id)
-    user = User.query.get_or_404(user_id)
-    if category not in user.categories:
+    user = User.query.get(user_id)
+    category = Category.query.get(category_id)
+
+    if not user or not category:
+        return jsonify({"error": "User or Category not found"}), 404
+
+    if category not in user.subscribed_categories:
         return jsonify({"error": "Not subscribed to this category"}), 404
 
-    user.categories.remove(category)
-    db.session.commit()
+    user.unsubscribe_from_category(category)
     return jsonify({"message": "Successfully unsubscribed from category"}), 200
 
 @bp.route('/comments/count/<int:content_id>', methods=['GET'])

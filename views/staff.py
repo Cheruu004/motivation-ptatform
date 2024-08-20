@@ -1,8 +1,8 @@
 
 
 from datetime import datetime
-from flask import Blueprint, request, jsonify
-from models import Content, Comment
+from flask import Blueprint, abort, request, jsonify
+from models import Content, Comment, LikeDislike, ActionType,User
 from app import db
 from schemas import ContentSchema, CommentSchema
 
@@ -130,3 +130,41 @@ def get_content():
 def get_all_comments():
     comments = Comment.query.all()
     return CommentSchema(many=True).jsonify(comments)
+
+@bp.route('/content/<int:content_id>/like_dislike', methods=['POST'])
+def like_dislike_content(content_id):
+    user_id = request.json.get('user_id')
+    if not user_id:
+        abort(401, description="User ID is required")
+
+    user = User.query.get(user_id)
+    if not user:
+        abort(404, description="User not found")
+
+    content = Content.query.get(content_id)
+    if not content:
+        abort(404, description="Content not found")
+
+    action_type_str = request.json.get('action_type')
+    try:
+        action_type = ActionType[action_type_str.lower()]  # Convert to lowercase to match enum values
+    except KeyError:
+        abort(400, description="Invalid action type")
+
+    existing_action = LikeDislike.query.filter_by(user_id=user.id, content_id=content_id).first()
+    
+    if existing_action:
+        if existing_action.type == action_type:
+            db.session.delete(existing_action)
+            db.session.commit()
+            return jsonify({"message": "Removed action"}), 200
+        else:
+            existing_action.type = action_type
+            db.session.commit()
+            return jsonify({"message": "Updated action"}), 200
+    else:
+        new_action = LikeDislike(user_id=user.id, content_id=content_id, type=action_type)
+        db.session.add(new_action)
+        db.session.commit()
+        return jsonify({"message": "Added action"}), 201
+
