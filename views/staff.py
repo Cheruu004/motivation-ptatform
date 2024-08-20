@@ -60,10 +60,20 @@ def approve_content(content_id):
 
 @bp.route('/content/<int:content_id>/flag', methods=['PATCH'])
 def flag_content(content_id):
+    data = request.get_json()
+    reason = data.get('reason')    
     content = Content.query.get_or_404(content_id)
+    
+    if content.flagged:
+        return jsonify({"message": "Content is already flagged."}), 400
+    
     content.flagged = True
+    content.flag_reason = reason
+    content.updated_at = datetime.utcnow()
+    
     db.session.commit()
-    return ContentSchema().jsonify(content)
+    
+    return jsonify({"message": "Content flagged successfully."}), 200
 
 @bp.route('/comments', methods=['POST'])
 def post_comment():

@@ -32,19 +32,48 @@ def add_user():
     db.session.commit()
     
     return jsonify({"message": "User added successfully"}), 201
-@bp.route('/users/<int:user_id>/deactivate', methods=['PATCH'])
-def deactivate_user(user_id):
-    user = User.query.get_or_404(user_id)
-    user.active = False
+
+@bp.route('/content', methods=['POST'])
+def post_content():
+    data = request.get_json()
+    new_content = Content(
+        title=data['title'],
+        description=data['description'],
+        content_type=data['content_type'],
+        content_url=data['content_url'],
+        category_id=data['category_id'],
+        created_by=data['created_by'],
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.session.add(new_content)
     db.session.commit()
-    return UserSchema().jsonify(user)
+    return ContentSchema().jsonify(new_content)
 
 @bp.route('/content/<int:content_id>/approve', methods=['PATCH'])
 def approve_content(content_id):
     content = Content.query.get_or_404(content_id)
-    content.approved_by = request.json['approved_by']
+    data = request.get_json()
+    content.approved_by = data.get('approved_by')
     db.session.commit()
     return ContentSchema().jsonify(content)
+
+@bp.route('/content/<int:content_id>/flag', methods=['PATCH'])
+def flag_content(content_id):
+    data = request.get_json()
+    reason = data.get('reason')    
+    content = Content.query.get_or_404(content_id)
+    
+    if content.flagged:
+        return jsonify({"message": "Content is already flagged."}), 400
+    
+    content.flagged = True
+    content.flag_reason = reason
+    content.updated_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    return jsonify({"message": "Content flagged successfully."}), 200
 
 @bp.route('/content/<int:content_id>', methods=['DELETE'])
 def remove_flagged_content(content_id):
@@ -55,6 +84,7 @@ def remove_flagged_content(content_id):
     db.session.delete(content)
     db.session.commit()
     return '', 204
+
 @bp.route('/categories', methods=['POST'])
 def create_category():
     data = request.get_json()
@@ -99,3 +129,8 @@ def get_analytics():
         "totalStudents": total_students,
         "totalContent": total_content
     })
+
+@bp.route('/categories', methods=['GET'])
+def list_categories():
+    categories = Category.query.all()
+    return CategorySchema(many=True).jsonify(categories)
